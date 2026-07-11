@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #7b2ff2 #1a1a2e;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #7b2ff2, #1368ce);
+  border-radius: 4px;
+}
+
+body {
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #0f0f23 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #f9a825 0%, #ff6b35 50%, #e21b3c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #7b2ff2 0%, #1368ce 30%, #26890c 60%, #e21b3c 100%);
+  background-size: 300% 300%;
+  animation: heroGradient 8s ease infinite;
+}
+
+@keyframes heroGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(123, 47, 242, 0.2);
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 2s ease-in-out infinite;
+  background: linear-gradient(90deg, #222244 25%, #2d2d5e 50%, #222244 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.dept-badge {
+  background: linear-gradient(135deg, #7b2ff2, #1368ce);
+}
+
+.tab-active {
+  border-bottom: 3px solid #f9a825;
+  color: #f9a825;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #7b2ff2;
+  box-shadow: 0 0 0 3px rgba(123, 47, 242, 0.3);
+}
