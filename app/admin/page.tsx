@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { useSettings } from '@/components/SettingsContext';
 import DeleteModal from '@/components/DeleteModal';
-import { Shield, Settings, FolderPlus, Users, Save, Plus, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { Shield, Settings, FolderPlus, Users, Save, Plus, Trash2, Loader2, AlertCircle, Star, Pin } from 'lucide-react';
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useSettings();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'settings' | 'departments' | 'teachers'>('settings');
+  const [activeTab, setActiveTab] = useState<'settings' | 'departments' | 'teachers' | 'featured'>('settings');
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsMsg, setSettingsMsg] = useState({ type: '', text: '' });
@@ -21,9 +21,10 @@ export default function AdminPage() {
   const [deleteDept, setDeleteDept] = useState<{ open: boolean; dept: any }>({ open: false, dept: null });
   const [teachers, setTeachers] = useState<any[]>([]);
   const [showTeacherForm, setShowTeacherForm] = useState(false);
-  const [teacherForm, setTeacherForm] = useState({ username: '', password: '', full_name: '', department: '', is_admin: false });
+  const [teacherForm, setTeacherForm] = useState({ username: '', password: '', full_name: '', department: '', is_admin: false, bio: '' });
   const [teacherSaving, setTeacherSaving] = useState(false);
   const [teacherMsg, setTeacherMsg] = useState({ type: '', text: '' });
+  const [achievements, setAchievements] = useState<any[]>([]);
 
   useEffect(() => { if (!authLoading && (!user || user.is_admin !== 1)) router.push('/login'); }, [authLoading, user, router]);
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function AdminPage() {
       fetch('/api/settings').then((r) => r.json()).then(setSettings).catch(() => {});
       fetch('/api/departments').then((r) => r.json()).then(setDepartments).catch(() => {});
       fetch('/api/teachers').then((r) => r.json()).then(setTeachers).catch(() => {});
+      fetch('/api/achievements').then((r) => r.json()).then(setAchievements).catch(() => {});
     }
   }, [user]);
 
@@ -39,8 +41,7 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
       if (!res.ok) throw new Error('Failed');
-      const data = await res.json(); setSettings(data);
-      setSettingsMsg({ type: 'success', text: t('admin.settingsSaved') });
+      setSettings(await res.json()); setSettingsMsg({ type: 'success', text: t('admin.settingsSaved') });
       setTimeout(() => setSettingsMsg({ type: '', text: '' }), 3000);
     } catch { setSettingsMsg({ type: 'error', text: t('error.saveFailed') }); } finally { setSettingsSaving(false); }
   };
@@ -49,8 +50,7 @@ export default function AdminPage() {
     if (!newDept.trim()) return; setDeptSaving(true);
     try {
       const res = await fetch('/api/departments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newDept.trim() }) });
-      const data = await res.json();
-      if (!res.ok) { alert(data.error); return; }
+      const data = await res.json(); if (!res.ok) { alert(data.error); return; }
       setDepartments([...departments, data]); setNewDept('');
     } catch { alert(t('error.saveFailed')); } finally { setDeptSaving(false); }
   };
@@ -59,10 +59,8 @@ export default function AdminPage() {
     if (!deleteDept.dept) return;
     try {
       const res = await fetch('/api/departments', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: deleteDept.dept.id }) });
-      const data = await res.json();
-      if (!res.ok) { alert(data.error); return; }
-      setDepartments(departments.filter((d) => d.id !== deleteDept.dept.id));
-      setDeleteDept({ open: false, dept: null });
+      const data = await res.json(); if (!res.ok) { alert(data.error); return; }
+      setDepartments(departments.filter((d) => d.id !== deleteDept.dept.id)); setDeleteDept({ open: false, dept: null });
     } catch { alert(t('error.deleteFailed')); }
   };
 
@@ -72,9 +70,23 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(teacherForm) });
       const data = await res.json(); if (!res.ok) throw new Error(data.error);
-      setTeachers([...teachers, data]); setTeacherForm({ username: '', password: '', full_name: '', department: '', is_admin: false }); setShowTeacherForm(false);
+      setTeachers([...teachers, data]); setTeacherForm({ username: '', password: '', full_name: '', department: '', is_admin: false, bio: '' }); setShowTeacherForm(false);
       setTeacherMsg({ type: 'success', text: '✅' }); setTimeout(() => setTeacherMsg({ type: '', text: '' }), 3000);
     } catch (err: any) { setTeacherMsg({ type: 'error', text: err.message || t('error.saveFailed') }); } finally { setTeacherSaving(false); }
+  };
+
+  const toggleFeatured = async (id: number, current: number) => {
+    try {
+      await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_featured: !current }) });
+      setAchievements(achievements.map((a) => a.id === id ? { ...a, is_featured: current ? 0 : 1 } : a));
+    } catch {}
+  };
+
+  const togglePinned = async (id: number, current: number) => {
+    try {
+      await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_pinned: !current }) });
+      setAchievements(achievements.map((a) => a.id === id ? { ...a, is_pinned: current ? 0 : 1 } : a));
+    } catch {}
   };
 
   if (authLoading || !user || user.is_admin !== 1) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 text-kahoot-red animate-spin" /></div>;
@@ -83,7 +95,9 @@ export default function AdminPage() {
     { id: 'settings' as const, label: t('admin.tabSettings'), icon: Settings },
     { id: 'departments' as const, label: t('admin.tabDepts'), icon: FolderPlus },
     { id: 'teachers' as const, label: t('admin.tabTeachers'), icon: Users },
+    { id: 'featured' as const, label: language === 'ar' ? 'المميزة' : 'Featured', icon: Star },
   ];
+  const { language } = useSettings();
 
   return (
     <div className="min-h-screen pb-16">
@@ -96,77 +110,56 @@ export default function AdminPage() {
         </div>
       </div>
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-        <div className="flex gap-1 mb-8 bg-dark-800 rounded-xl p-1 border border-dark-600">
+        <div className="flex gap-1 mb-8 bg-dark-800 rounded-xl p-1 border border-dark-600 overflow-x-auto">
           {tabs.map((tab) => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-dark-700'}`}>
+              className={`flex-1 min-w-[100px] flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-dark-700'}`}>
               <tab.icon className="w-4 h-4" /><span className="hidden sm:inline">{tab.label}</span>
             </button>
           ))}
         </div>
 
+        {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="bg-dark-800 rounded-2xl border border-dark-600 p-6 animate-fade-in">
             <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><Settings className="w-5 h-5 text-kahoot-yellow" />{t('admin.schoolInfo')}</h2>
             {settingsMsg.text && (<div className={`mb-6 p-4 rounded-xl text-sm flex items-center gap-2 ${settingsMsg.type === 'success' ? 'bg-kahoot-green/10 border border-kahoot-green/30 text-kahoot-green' : 'bg-kahoot-red/10 border border-kahoot-red/30 text-kahoot-red'}`}>{settingsMsg.type === 'error' && <AlertCircle className="w-4 h-4 shrink-0" />}{settingsMsg.text}</div>)}
             <div className="space-y-5">
-              {[
-                { key: 'school_name', label: t('admin.schoolName'), placeholder: 'My Amazing School' },
-                { key: 'manager_name', label: t('admin.managerName'), placeholder: 'Dr. John Smith' },
-                { key: 'tagline', label: t('admin.tagline'), placeholder: 'Celebrating Academic Excellence' },
-                { key: 'phone', label: t('admin.phone'), placeholder: '+1 (555) 123-4567' },
-                { key: 'address', label: t('admin.address'), placeholder: '123 Education St' },
-                { key: 'logo_url', label: t('admin.logoUrl'), placeholder: 'https://example.com/logo.png' },
-              ].map((field) => (
-                <div key={field.key}>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">{field.label}</label>
-                  <input type="text" value={settings[field.key] || ''} onChange={(e) => setSettings({ ...settings, [field.key]: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white placeholder-gray-500 text-sm" placeholder={field.placeholder} />
-                </div>
+              {[{ key: 'school_name', label: t('admin.schoolName'), placeholder: 'My Amazing School' }, { key: 'manager_name', label: t('admin.managerName'), placeholder: 'Dr. John Smith' }, { key: 'tagline', label: t('admin.tagline'), placeholder: 'Celebrating Academic Excellence' }, { key: 'phone', label: t('admin.phone'), placeholder: '+1 (555) 123-4567' }, { key: 'address', label: t('admin.address'), placeholder: '123 Education St' }, { key: 'logo_url', label: t('admin.logoUrl'), placeholder: 'https://example.com/logo.png' }].map((f) => (
+                <div key={f.key}><label className="block text-sm font-medium text-gray-300 mb-2">{f.label}</label><input type="text" value={settings[f.key] || ''} onChange={(e) => setSettings({ ...settings, [f.key]: e.target.value })} className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white placeholder-gray-500 text-sm" placeholder={f.placeholder} /></div>
               ))}
-              <button onClick={handleSaveSettings} disabled={settingsSaving}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-kahoot-green to-emerald-600 text-white font-bold text-sm hover:shadow-lg hover:shadow-kahoot-green/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                {settingsSaving ? (<><Loader2 className="w-4 h-4 animate-spin" /></>) : (<><Save className="w-4 h-4" />{t('admin.saveSettings')}</>)}
+              <button onClick={handleSaveSettings} disabled={settingsSaving} className="w-full py-3 rounded-xl bg-gradient-to-r from-kahoot-green to-emerald-600 text-white font-bold text-sm hover:shadow-lg hover:shadow-kahoot-green/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {settingsSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" />{t('admin.saveSettings')}</>}
               </button>
             </div>
           </div>
         )}
 
+        {/* Departments Tab */}
         {activeTab === 'departments' && (
           <div className="bg-dark-800 rounded-2xl border border-dark-600 p-6 animate-fade-in">
             <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><FolderPlus className="w-5 h-5 text-kahoot-yellow" />{t('admin.manageDepts')}</h2>
             <div className="flex gap-3 mb-6">
-              <input type="text" value={newDept} onChange={(e) => setNewDept(e.target.value)} placeholder={t('admin.deptPlaceholder')}
-                className="flex-1 px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white placeholder-gray-500 text-sm" onKeyDown={(e) => e.key === 'Enter' && handleAddDept()} />
-              <button onClick={handleAddDept} disabled={deptSaving || !newDept.trim()}
-                className="px-6 py-3 rounded-xl bg-gradient-to-r from-kahoot-green to-emerald-600 text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2">
-                <Plus className="w-4 h-4" />{t('admin.add')}
-              </button>
+              <input type="text" value={newDept} onChange={(e) => setNewDept(e.target.value)} placeholder={t('admin.deptPlaceholder')} className="flex-1 px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white placeholder-gray-500 text-sm" onKeyDown={(e) => e.key === 'Enter' && handleAddDept()} />
+              <button onClick={handleAddDept} disabled={deptSaving || !newDept.trim()} className="px-6 py-3 rounded-xl bg-gradient-to-r from-kahoot-green to-emerald-600 text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"><Plus className="w-4 h-4" />{t('admin.add')}</button>
             </div>
             <div className="space-y-2">
-              {departments.length === 0 ? (<p className="text-gray-400 text-sm text-center py-8">{t('admin.noDepts')}</p>) : (
-                departments.map((dept) => (
-                  <div key={dept.id} className="flex items-center justify-between p-4 rounded-xl bg-dark-700 border border-dark-600 group">
-                    <div className="flex items-center gap-3">
-                      <div className="dept-badge w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white">{dept.name[0]}</div>
-                      <span className="text-white text-sm font-medium">{dept.name}</span>
-                    </div>
-                    <button onClick={() => setDeleteDept({ open: true, dept })} className="w-8 h-8 rounded-lg bg-dark-600 hover:bg-kahoot-red/20 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4 text-kahoot-red" /></button>
-                  </div>
-                ))
-              )}
+              {departments.length === 0 ? <p className="text-gray-400 text-sm text-center py-8">{t('admin.noDepts')}</p> : departments.map((dept) => (
+                <div key={dept.id} className="flex items-center justify-between p-4 rounded-xl bg-dark-700 border border-dark-600 group">
+                  <div className="flex items-center gap-3"><div className="dept-badge w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white">{dept.name[0]}</div><span className="text-white text-sm font-medium">{dept.name}</span></div>
+                  <button onClick={() => setDeleteDept({ open: true, dept })} className="w-8 h-8 rounded-lg bg-dark-600 hover:bg-kahoot-red/20 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4 text-kahoot-red" /></button>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
+        {/* Teachers Tab */}
         {activeTab === 'teachers' && (
           <div className="bg-dark-800 rounded-2xl border border-dark-600 p-6 animate-fade-in">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold text-white flex items-center gap-2"><Users className="w-5 h-5 text-kahoot-yellow" />{t('admin.teacherAccounts')}</h2>
-              <button onClick={() => setShowTeacherForm(!showTeacherForm)}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white text-sm font-medium flex items-center gap-2 hover:shadow-lg transition-all">
-                <Plus className="w-4 h-4" />{t('admin.addAccount')}
-              </button>
+              <button onClick={() => setShowTeacherForm(!showTeacherForm)} className="px-4 py-2 rounded-xl bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white text-sm font-medium flex items-center gap-2 hover:shadow-lg transition-all"><Plus className="w-4 h-4" />{t('admin.addAccount')}</button>
             </div>
             {teacherMsg.text && (<div className={`mb-4 p-4 rounded-xl text-sm ${teacherMsg.type === 'success' ? 'bg-kahoot-green/10 border border-kahoot-green/30 text-kahoot-green' : 'bg-kahoot-red/10 border border-kahoot-red/30 text-kahoot-red'}`}>{teacherMsg.text}</div>)}
             {showTeacherForm && (
@@ -174,46 +167,59 @@ export default function AdminPage() {
                 <h3 className="text-sm font-bold text-white mb-4">{t('admin.createNewAccount')}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div><label className="block text-xs font-medium text-gray-400 mb-1">{t('login.username')}</label><input type="text" value={teacherForm.username} onChange={(e) => setTeacherForm({ ...teacherForm, username: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white placeholder-gray-500 text-sm" placeholder="teacher123" /></div>
-                  <div><label className="block text-xs font-medium text-gray-400 mb-1">{t('admin.fullName')}</label><input type="text" value={teacherForm.full_name} onChange={(e) => setTeacherForm({ ...teacherForm, full_name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white placeholder-gray-500 text-sm" placeholder="John Smith" /></div>
-                  <div><label className="block text-xs font-medium text-gray-400 mb-1">{t('login.password')}</label><input type="password" value={teacherForm.password} onChange={(e) => setTeacherForm({ ...teacherForm, password: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white placeholder-gray-500 text-sm" placeholder="••••••••" /></div>
+                  <div><label className="block text-xs font-medium text-gray-400 mb-1">{t('admin.fullName')}</label><input type="text" value={teacherForm.full_name} onChange={(e) => setTeacherForm({ ...teacherForm, full_name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white placeholder-gray-500 text-sm" /></div>
+                  <div><label className="block text-xs font-medium text-gray-400 mb-1">{t('login.password')}</label><input type="password" value={teacherForm.password} onChange={(e) => setTeacherForm({ ...teacherForm, password: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white placeholder-gray-500 text-sm" /></div>
                   <div><label className="block text-xs font-medium text-gray-400 mb-1">{t('form.dept')}</label>
                     <select value={teacherForm.department} onChange={(e) => setTeacherForm({ ...teacherForm, department: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white text-sm appearance-none">
-                      <option value="">{t('form.selectDept')}</option>
-                      {departments.map((d: any) => (<option key={d.id} value={d.name}>{d.name}</option>))}
+                      <option value="">{t('form.selectDept')}</option>{departments.map((d: any) => (<option key={d.id} value={d.name}>{d.name}</option>))}
                     </select>
                   </div>
+                  <div className="sm:col-span-2"><label className="block text-xs font-medium text-gray-400 mb-1">{language === 'ar' ? 'السيرة الذاتية' : 'Bio'}</label><textarea value={teacherForm.bio} onChange={(e) => setTeacherForm({ ...teacherForm, bio: e.target.value })} rows={2} className="w-full px-3 py-2 rounded-lg bg-dark-800 border border-dark-600 text-white placeholder-gray-500 text-sm resize-none" placeholder={language === 'ar' ? 'نبذة عن المعلم...' : 'A short bio about this teacher...'} /></div>
                 </div>
-                <div className="mt-4 flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={teacherForm.is_admin} onChange={(e) => setTeacherForm({ ...teacherForm, is_admin: e.target.checked })} className="w-4 h-4 rounded bg-dark-800 border-dark-600 text-kahoot-purple" />
-                    <span className="text-sm text-gray-300">{t('admin.adminPrivileges')}</span>
-                  </label>
-                </div>
+                <div className="mt-4 flex items-center gap-3"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={teacherForm.is_admin} onChange={(e) => setTeacherForm({ ...teacherForm, is_admin: e.target.checked })} className="w-4 h-4 rounded bg-dark-800 border-dark-600 text-kahoot-purple" /><span className="text-sm text-gray-300">{t('admin.adminPrivileges')}</span></label></div>
                 <div className="mt-4 flex gap-3">
-                  <button onClick={handleCreateTeacher} disabled={teacherSaving} className="px-5 py-2 rounded-lg bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2">
-                    {teacherSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}{t('admin.createAccount')}
-                  </button>
+                  <button onClick={handleCreateTeacher} disabled={teacherSaving} className="px-5 py-2 rounded-lg bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white text-sm font-medium disabled:opacity-50 flex items-center gap-2">{teacherSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}{t('admin.createAccount')}</button>
                   <button onClick={() => setShowTeacherForm(false)} className="px-4 py-2 rounded-lg bg-dark-600 text-gray-300 hover:bg-dark-500 text-sm transition-colors">{t('form.cancel')}</button>
                 </div>
               </div>
             )}
             <div className="space-y-2">
-              {teachers.length === 0 ? (<p className="text-gray-400 text-sm text-center py-8">{t('admin.noTeachers')}</p>) : (
-                teachers.map((tch) => (
-                  <div key={tch.id} className="flex items-center justify-between p-4 rounded-xl bg-dark-700 border border-dark-600">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${tch.is_admin ? 'bg-gradient-to-br from-kahoot-red to-kahoot-orange' : 'bg-gradient-to-br from-kahoot-purple to-kahoot-blue'}`}>{tch.full_name?.[0] || tch.username[0]}</div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-white text-sm font-medium">{tch.full_name}</span>
-                          {tch.is_admin === 1 && <span className="px-2 py-0.5 rounded-full text-xs bg-kahoot-red/20 text-kahoot-red font-bold">Admin</span>}
-                        </div>
-                        <div className="text-xs text-gray-500">@{tch.username} · {tch.department}</div>
-                      </div>
-                    </div>
+              {teachers.length === 0 ? <p className="text-gray-400 text-sm text-center py-8">{t('admin.noTeachers')}</p> : teachers.map((tch) => (
+                <div key={tch.id} className="flex items-center justify-between p-4 rounded-xl bg-dark-700 border border-dark-600">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white ${tch.is_admin ? 'bg-gradient-to-br from-kahoot-red to-kahoot-orange' : 'bg-gradient-to-br from-kahoot-purple to-kahoot-blue'}`}>{tch.full_name?.[0] || tch.username[0]}</div>
+                    <div><div className="flex items-center gap-2"><span className="text-white text-sm font-medium">{tch.full_name}</span>{tch.is_admin === 1 && <span className="px-2 py-0.5 rounded-full text-xs bg-kahoot-red/20 text-kahoot-red font-bold">Admin</span>}</div><div className="text-xs text-gray-500">@{tch.username} · {tch.department}</div></div>
                   </div>
-                ))
-              )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Featured/Pinned Tab */}
+        {activeTab === 'featured' && (
+          <div className="bg-dark-800 rounded-2xl border border-dark-600 p-6 animate-fade-in">
+            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2"><Star className="w-5 h-5 text-kahoot-yellow" />{language === 'ar' ? 'إدارة الإنجازات المميزة' : 'Manage Featured Achievements'}</h2>
+            <p className="text-gray-400 text-sm mb-6">{language === 'ar' ? 'تحكم في الإنجازات التي تظهر في المعرض المميز والأعلى' : 'Control which achievements appear in the featured carousel and pinned to top'}</p>
+            <div className="space-y-3">
+              {achievements.map((a) => (
+                <div key={a.id} className="flex items-center justify-between p-4 rounded-xl bg-dark-700 border border-dark-600 gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-white text-sm font-medium truncate">{a.title}</h4>
+                    <p className="text-xs text-gray-500">{a.teacher_name} · {a.department}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => toggleFeatured(a.id, a.is_featured)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${a.is_featured ? 'bg-kahoot-yellow/20 text-kahoot-yellow border border-kahoot-yellow/40' : 'bg-dark-600 text-gray-400 border border-dark-600 hover:border-gray-500'}`}>
+                      <Star className="w-3 h-3" />{language === 'ar' ? 'مميز' : 'Featured'}
+                    </button>
+                    <button onClick={() => togglePinned(a.id, a.is_pinned)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${a.is_pinned ? 'bg-kahoot-purple/20 text-kahoot-purple border border-kahoot-purple/40' : 'bg-dark-600 text-gray-400 border border-dark-600 hover:border-gray-500'}`}>
+                      <Pin className="w-3 h-3" />{language === 'ar' ? 'مثبت' : 'Pinned'}
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
