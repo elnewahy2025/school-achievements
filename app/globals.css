@@ -2,28 +2,122 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   SCROLLBAR
+   ============================================ */
 * {
   scrollbar-width: thin;
   scrollbar-color: #7b2ff2 #1a1a2e;
 }
+*::-webkit-scrollbar { width: 8px; }
+*::-webkit-scrollbar-track { background: #1a1a2e; }
+*::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #7b2ff2, #1368ce); border-radius: 4px; }
 
-*::-webkit-scrollbar {
-  width: 8px;
-}
-
-*::-webkit-scrollbar-track {
-  background: #1a1a2e;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #7b2ff2, #1368ce);
-  border-radius: 4px;
-}
-
+/* ============================================
+   BASE (dark = default)
+   ============================================ */
 body {
   background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #0f0f23 100%);
 }
 
+/* ============================================
+   LIGHT MODE OVERRIDES
+   ============================================ */
+[data-theme="light"] body {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #f8fafc 100%);
+}
+
+/* Surface backgrounds */
+[data-theme="light"] .bg-dark-900 { background-color: #f1f5f9 !important; }
+[data-theme="light"] .bg-dark-800 { background-color: #ffffff !important; }
+[data-theme="light"] .bg-dark-700 { background-color: #f8fafc !important; }
+[data-theme="light"] .bg-dark-600 { background-color: #e2e8f0 !important; }
+[data-theme="light"] .bg-dark-800\/95 { background-color: rgba(255,255,255,0.95) !important; }
+[data-theme="light"] .bg-dark-800\/50 { background-color: rgba(255,255,255,0.5) !important; }
+[data-theme="light"] .bg-dark-700\/50 { background-color: rgba(241,245,249,0.5) !important; }
+[data-theme="light"] .bg-dark-900\/80 { background-color: rgba(248,250,252,0.8) !important; }
+
+/* Text colors */
+[data-theme="light"] .text-white { color: #0f172a !important; }
+[data-theme="light"] .text-gray-300 { color: #475569 !important; }
+[data-theme="light"] .text-gray-400 { color: #64748b !important; }
+[data-theme="light"] .text-gray-500 { color: #94a3b8 !important; }
+
+/* Placeholder text */
+[data-theme="light"] .placeholder-gray-400 { --tw-placeholder-opacity: 1; }
+[data-theme="light"] .placeholder-gray-400::placeholder { color: #94a3b8 !important; }
+[data-theme="light"] .placeholder-gray-500::placeholder { color: #94a3b8 !important; }
+
+/* Borders */
+[data-theme="light"] .border-dark-600 { border-color: #e2e8f0 !important; }
+[data-theme="light"] .border-dark-700 { border-color: #e2e8f0 !important; }
+[data-theme="light"] .divide-dark-600 > :not([hidden]) ~ :not([hidden]) { border-color: #e2e8f0 !important; }
+
+/* Skeleton in light mode */
+[data-theme="light"] .skeleton-pulse {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+}
+
+/* Hover states in light mode */
+[data-theme="light"] .hover\:bg-dark-700:hover { background-color: #f1f5f9 !important; }
+[data-theme="light"] .hover\:bg-dark-600:hover { background-color: #e2e8f0 !important; }
+[data-theme="light"] .hover\:bg-dark-500:hover { background-color: #cbd5e1 !important; }
+
+/* ============================================
+   PROTECT TEXT ON COLORED BACKGROUNDS
+   ============================================ */
+[data-theme="light"] .hero-gradient .text-white,
+[data-theme="light"] .dept-badge .text-white,
+[data-theme="light"] [class*="bg-gradient-to-br"] > .text-white,
+[data-theme="light"] [class*="bg-gradient-to-r"] > .text-white,
+[data-theme="light"] .from-kahoot-purple > .text-white,
+[data-theme="light"] .from-kahoot-blue > .text-white,
+[data-theme="light"] .from-kahoot-green > .text-white,
+[data-theme="light"] .from-kahoot-red > .text-white,
+[data-theme="light"] .from-kahoot-orange > .text-white,
+[data-theme="light"] .from-kahoot-yellow > .text-white,
+[data-theme="light"] .from-pink-500 > .text-white,
+[data-theme="light"] .from-cyan-500 > .text-white,
+[data-theme="light"] .from-emerald-500 > .text-white,
+[data-theme="light"] .from-blue-500 > .text-white,
+[data-theme="light"] .from-purple-500 > .text-white,
+[data-theme="light"] .from-amber-500 > .text-white,
+[data-theme="light"] .from-red-500 > .text-white,
+[data-theme="light"] .from-yellow-500 > .text-white,
+[data-theme="light"] .from-gray-500 > .text-white,
+[data-theme="light"] .from-indigo-500 > .text-white,
+[data-theme="light"] .from-violet-500 > .text-white,
+[data-theme="light"] .from-rose-500 > .text-white,
+[data-theme="light"] .from-teal-500 > .text-white {
+  color: white !important;
+}
+
+/* Also protect white text inside gradient buttons and badges */
+[data-theme="light"] button[class*="bg-gradient"] .text-white,
+[data-theme="light"] a[class*="bg-gradient"] .text-white,
+[data-theme="light"] .dept-badge .text-white {
+  color: white !important;
+}
+
+/* Lightbox backdrop */
+[data-theme="light"] .fixed.inset-0.bg-black\/95 { background-color: rgba(0,0,0,0.85) !important; }
+
+/* ============================================
+   RTL SUPPORT
+   ============================================ */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 .gradient-text {
   background: linear-gradient(135deg, #f9a825 0%, #ff6b35 50%, #e21b3c 100%);
   -webkit-background-clip: text;
@@ -52,8 +146,11 @@ body {
   box-shadow: 0 20px 40px rgba(123, 47, 242, 0.2);
 }
 
+[data-theme="light"] .card-hover:hover {
+  box-shadow: 0 20px 40px rgba(123, 47, 242, 0.12);
+}
+
 .skeleton-pulse {
-  animation: skeletonPulse 2s ease-in-out infinite;
   background: linear-gradient(90deg, #222244 25%, #2d2d5e 50%, #222244 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.5s ease-in-out infinite;
@@ -84,4 +181,10 @@ select:focus {
   outline: none;
   border-color: #7b2ff2;
   box-shadow: 0 0 0 3px rgba(123, 47, 242, 0.3);
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus {
+  box-shadow: 0 0 0 3px rgba(123, 47, 242, 0.15);
 }

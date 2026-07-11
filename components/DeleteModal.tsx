@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertTriangle, X, Trash2 } from 'lucide-react';
+import { AlertTriangle, Trash2 } from 'lucide-react';
+import { useSettings } from './SettingsContext';
 
 interface DeleteModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface DeleteModalProps {
 }
 
 export default function DeleteModal({ isOpen, title, message, onConfirm, onCancel, loading }: DeleteModalProps) {
+  const { t } = useSettings();
   if (!isOpen) return null;
 
   return (
@@ -32,7 +34,7 @@ export default function DeleteModal({ isOpen, title, message, onConfirm, onCance
             onClick={onCancel}
             className="px-4 py-2 rounded-lg bg-dark-700 text-gray-300 hover:bg-dark-600 hover:text-white transition-all text-sm"
           >
-            Cancel
+            {t('modal.cancel')}
           </button>
           <button
             onClick={onConfirm}
@@ -40,7 +42,7 @@ export default function DeleteModal({ isOpen, title, message, onConfirm, onCance
             className="px-4 py-2 rounded-lg bg-kahoot-red text-white hover:bg-red-600 transition-all text-sm flex items-center gap-2 disabled:opacity-50"
           >
             <Trash2 className="w-4 h-4" />
-            {loading ? 'Deleting...' : 'Delete'}
+            {loading ? t('modal.deleting') : t('modal.delete')}
           </button>
         </div>
       </div>
