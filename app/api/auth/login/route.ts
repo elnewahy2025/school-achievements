@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // set to true when behind HTTPS proxy in production
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 7,

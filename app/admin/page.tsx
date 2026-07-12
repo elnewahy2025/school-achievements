@@ -39,17 +39,17 @@ export default function AdminPage() {
   const handleSaveSettings = async () => {
     setSettingsSaving(true); setSettingsMsg({ type: '', text: '' });
     try {
-      const res = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
-      if (!res.ok) throw new Error('Failed');
+      const res = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings), credentials: 'same-origin' });
+      if (!res.ok) { const err = await res.json().catch(() => ({ error: 'Unknown error' })); throw new Error(err.error || `HTTP ${res.status}`); }
       setSettings(await res.json()); setSettingsMsg({ type: 'success', text: t('admin.settingsSaved') });
       setTimeout(() => setSettingsMsg({ type: '', text: '' }), 3000);
-    } catch { setSettingsMsg({ type: 'error', text: t('error.saveFailed') }); } finally { setSettingsSaving(false); }
+    } catch (e: any) { setSettingsMsg({ type: 'error', text: e?.message || t('error.saveFailed') }); } finally { setSettingsSaving(false); }
   };
 
   const handleAddDept = async () => {
     if (!newDept.trim()) return; setDeptSaving(true);
     try {
-      const res = await fetch('/api/departments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newDept.trim() }) });
+      const res = await fetch('/api/departments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newDept.trim() }), credentials: 'same-origin' });
       const data = await res.json(); if (!res.ok) { alert(data.error); return; }
       setDepartments([...departments, data]); setNewDept('');
     } catch { alert(t('error.saveFailed')); } finally { setDeptSaving(false); }
@@ -58,7 +58,7 @@ export default function AdminPage() {
   const handleDeleteDept = async () => {
     if (!deleteDept.dept) return;
     try {
-      const res = await fetch('/api/departments', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: deleteDept.dept.id }) });
+      const res = await fetch('/api/departments', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: deleteDept.dept.id }), credentials: 'same-origin' });
       const data = await res.json(); if (!res.ok) { alert(data.error); return; }
       setDepartments(departments.filter((d) => d.id !== deleteDept.dept.id)); setDeleteDept({ open: false, dept: null });
     } catch { alert(t('error.deleteFailed')); }
@@ -68,7 +68,7 @@ export default function AdminPage() {
     if (!teacherForm.username || !teacherForm.password || !teacherForm.full_name || !teacherForm.department) { setTeacherMsg({ type: 'error', text: 'All fields required' }); return; }
     setTeacherSaving(true); setTeacherMsg({ type: '', text: '' });
     try {
-      const res = await fetch('/api/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(teacherForm) });
+      const res = await fetch('/api/teachers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(teacherForm), credentials: 'same-origin' });
       const data = await res.json(); if (!res.ok) throw new Error(data.error);
       setTeachers([...teachers, data]); setTeacherForm({ username: '', password: '', full_name: '', department: '', is_admin: false, bio: '' }); setShowTeacherForm(false);
       setTeacherMsg({ type: 'success', text: '✅' }); setTimeout(() => setTeacherMsg({ type: '', text: '' }), 3000);
@@ -77,14 +77,14 @@ export default function AdminPage() {
 
   const toggleFeatured = async (id: number, current: number) => {
     try {
-      await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_featured: !current }) });
+      await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_featured: !current }), credentials: 'same-origin' });
       setAchievements(achievements.map((a) => a.id === id ? { ...a, is_featured: current ? 0 : 1 } : a));
     } catch {}
   };
 
   const togglePinned = async (id: number, current: number) => {
     try {
-      await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_pinned: !current }) });
+      await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, is_pinned: !current }), credentials: 'same-origin' });
       setAchievements(achievements.map((a) => a.id === id ? { ...a, is_pinned: current ? 0 : 1 } : a));
     } catch {}
   };
