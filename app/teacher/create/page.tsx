@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { useSettings } from '@/components/SettingsContext';
-import { Plus, X, FileText, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
+import { Plus, X, FileText, Image as ImageIcon, Upload, Loader2, Tag } from 'lucide-react';
 
 export default function CreateAchievement() {
   const { user, loading: authLoading } = useAuth();
   const { t } = useSettings();
   const router = useRouter();
   const [departments, setDepartments] = useState<any[]>([]);
-  const [form, setForm] = useState({ title: '', description: '', department: '', event_date: '' });
+  const [form, setForm] = useState({ title: '', description: '', department: '', event_date: '', categories: '' });
   const [files, setFiles] = useState<File[]>([]);
   const [saving, setSaving] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -31,8 +31,8 @@ export default function CreateAchievement() {
     return null;
   };
 
-  const handleFiles = (newFiles: FileList | File[]) => {
-    const arr = Array.from(newFiles);
+  const handleFiles = (fl: FileList | File[]) => {
+    const arr = Array.from(fl);
     for (const f of arr) { const err = validateFile(f); if (err) { alert(err); return; } }
     setFiles((prev) => [...prev, ...arr]);
   };
@@ -41,8 +41,7 @@ export default function CreateAchievement() {
     e.preventDefault();
     if (!form.title.trim()) { setError(t('form.title')); return; }
     if (!form.department) { setError(t('form.dept')); return; }
-    setError('');
-    setSaving(true);
+    setError(''); setSaving(true);
     try {
       const res = await fetch('/api/achievements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
@@ -94,6 +93,21 @@ export default function CreateAchievement() {
                 className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white text-sm" />
             </div>
           </div>
+          {/* Categories */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2"><Tag className="w-4 h-4" />{t('form.categories')}</label>
+            <input type="text" value={form.categories} onChange={(e) => setForm({ ...form, categories: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white placeholder-gray-400 text-sm"
+              placeholder={t('form.categoriesPlaceholder')} />
+            <p className="text-xs text-gray-500 mt-1">{t('form.categoriesHint')}</p>
+            {form.categories && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {form.categories.split(',').filter(Boolean).map((c, i) => (
+                  <span key={i} className="px-2 py-0.5 rounded-full text-xs bg-kahoot-purple/20 text-kahoot-purple border border-kahoot-purple/30">{c.trim()}</span>
+                ))}
+              </div>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">{t('form.files')}</label>
             <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${dragActive ? 'border-kahoot-purple bg-kahoot-purple/10' : 'border-dark-600 hover:border-dark-500'}`}
@@ -102,8 +116,7 @@ export default function CreateAchievement() {
               <Upload className="w-10 h-10 text-gray-500 mx-auto mb-3" />
               <p className="text-gray-300 text-sm" dangerouslySetInnerHTML={{ __html: t('form.dragDrop', { browse: `<span class="text-kahoot-purple">${t('form.browse')}</span>` }) }} />
               <p className="text-xs text-gray-500 mt-2">{t('form.fileHint')}</p>
-              <input id="file-input" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" className="hidden"
-                onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+              <input id="file-input" type="file" multiple accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" className="hidden" onChange={(e) => e.target.files && handleFiles(e.target.files)} />
             </div>
             {files.length > 0 && (
               <div className="mt-4 space-y-2">
@@ -118,8 +131,7 @@ export default function CreateAchievement() {
             )}
           </div>
           <div className="flex gap-4 pt-4">
-            <button type="submit" disabled={saving}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white font-bold text-sm hover:shadow-lg hover:shadow-kahoot-purple/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+            <button type="submit" disabled={saving} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white font-bold text-sm hover:shadow-lg hover:shadow-kahoot-purple/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
               {saving ? (<><Loader2 className="w-4 h-4 animate-spin" />{t('form.creating')}</>) : (<><Plus className="w-4 h-4" />{t('form.createBtn')}</>)}
             </button>
             <button type="button" onClick={() => router.back()} className="px-6 py-3 rounded-xl bg-dark-700 text-gray-300 hover:bg-dark-600 hover:text-white transition-all text-sm">{t('form.cancel')}</button>

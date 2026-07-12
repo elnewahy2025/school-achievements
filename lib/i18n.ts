@@ -119,6 +119,13 @@ const translations: Record<string, Record<string, string>> = {
     'error.loadFailed': 'Failed to load',
     'error.saveFailed': 'Failed to save',
     'error.deleteFailed': 'Failed to delete',
+    'filter.allCategories': 'All Categories',
+    'form.categories': 'Categories / Tags',
+    'form.categoriesPlaceholder': 'e.g., individual, team, regional, national',
+    'form.categoriesHint': 'Comma-separated tags to help categorize this achievement',
+    'export.pdf': 'Export PDF',
+    'calendar.title': 'Calendar View',
+    'calendar.months': 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
   },
   ar: {
     // Nav

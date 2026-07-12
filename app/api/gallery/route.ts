@@ -6,6 +6,7 @@ const querySchema = z.object({
   department: z.string().optional(),
   teacher: z.string().optional(),
   search: z.string().optional(),
+  category: z.string().optional(),
   featured: z.string().optional(),
   recent: z.string().optional(),
 });
@@ -17,11 +18,12 @@ export async function GET(request: NextRequest) {
       department: searchParams.get('department') || undefined,
       teacher: searchParams.get('teacher') || undefined,
       search: searchParams.get('search') || undefined,
+      category: searchParams.get('category') || undefined,
       featured: searchParams.get('featured') || undefined,
       recent: searchParams.get('recent') || undefined,
     });
     if (!parsed.success) return NextResponse.json({ error: 'Invalid params' }, { status: 400 });
-    const { department, teacher, search, featured, recent } = parsed.data;
+    const { department, teacher, search, category, featured, recent } = parsed.data;
     const db = getDb();
 
     let query = 'SELECT * FROM achievements WHERE 1=1';
@@ -29,7 +31,8 @@ export async function GET(request: NextRequest) {
 
     if (department) { query += ' AND department = ?'; params.push(department); }
     if (teacher) { query += ' AND teacher_name LIKE ?'; params.push(`%${teacher}%`); }
-    if (search) { query += ' AND (title LIKE ? OR description LIKE ?)'; params.push(`%${search}%`, `%${search}%`); }
+    if (search) { query += ' AND (title LIKE ? OR description LIKE ? OR categories LIKE ?)'; params.push(`%${search}%`, `%${search}%`, `%${search}%`); }
+    if (category) { query += ' AND categories LIKE ?'; params.push(`%${category}%`); }
     if (featured === '1') { query += ' AND is_featured = 1'; }
     if (recent === '1') { query += " AND created_at >= datetime('now', '-7 days')"; }
 

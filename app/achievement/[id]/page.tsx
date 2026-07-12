@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSettings } from '@/components/SettingsContext';
-import { Award, Calendar, User, FileText, Download, ChevronLeft, ChevronRight, Share2, Copy, Check, ArrowLeft } from 'lucide-react';
+import { Award, Calendar, User, FileText, Download, ChevronLeft, ChevronRight, Share2, Copy, Check, ArrowLeft, FileDown } from 'lucide-react';
+import { exportSingleAchievementPdf } from '@/lib/exportPdf';
 
 interface Achievement { id: number; title: string; description: string; department: string; teacher_id: number | null; teacher_name: string; event_date: string | null; reactions: string; categories: string; created_at: string; files: any[]; teacher?: any; }
 
@@ -148,6 +149,9 @@ export default function AchievementDetail() {
                 <button onClick={() => handleShare('whatsapp')} className="px-3 py-2 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 text-xs transition-all">WhatsApp</button>
                 <button onClick={() => handleShare('copy')} className="px-3 py-2 rounded-lg bg-dark-700 hover:bg-dark-600 text-gray-300 text-xs transition-all flex items-center gap-1">
                   {copied ? <><Check className="w-3 h-3 text-kahoot-green" />Copied!</> : <><Copy className="w-3 h-3" />Copy link</>}
+                </button>
+                <button onClick={() => exportSingleAchievementPdf(achievement, 'School Achievements')} className="px-3 py-2 rounded-lg bg-kahoot-purple/20 hover:bg-kahoot-purple/30 text-kahoot-purple text-xs transition-all flex items-center gap-1">
+                  <FileDown className="w-3 h-3" />PDF
                 </button>
               </div>
             </div>

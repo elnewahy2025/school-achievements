@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Search, Filter, Award, GraduationCap, Calendar, User, FileText, Image as ImageIcon,
-  X, ChevronLeft, ChevronRight, Download, Phone, MapPin, TrendingUp, Sparkles, Clock
+  X, ChevronLeft, ChevronRight, Download, Phone, MapPin, TrendingUp, Sparkles, Clock, CalendarDays, LayoutGrid
 } from 'lucide-react';
 import { useSettings } from '@/components/SettingsContext';
+import CalendarView from '@/components/CalendarView';
 
 interface FileRecord { id: number; file_type: string; original_name: string; stored_name: string; mime_type: string; size: number; }
 interface Achievement { id: number; title: string; description: string; department: string; teacher_id: number | null; teacher_name: string; event_date: string | null; is_featured: number; is_pinned: number; reactions: string; categories: string; created_at: string; files: FileRecord[]; }
@@ -58,6 +59,7 @@ export default function GalleryPage() {
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedTeacher, setSelectedTeacher] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Achievement[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -65,6 +67,7 @@ export default function GalleryPage() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [reacting, setReacting] = useState<number | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'calendar'>('grid');
 
   // Close suggestions on outside click
   useEffect(() => {
@@ -89,10 +92,11 @@ export default function GalleryPage() {
       if (selectedDept) params.set('department', selectedDept);
       if (selectedTeacher) params.set('teacher', selectedTeacher);
       if (searchQuery) params.set('search', searchQuery);
+    if (selectedCategory) params.set('category', selectedCategory);
       const res = await fetch(`/api/gallery?${params.toString()}`);
       setAchievements(await res.json());
     } catch {} finally { setLoading(false); }
-  }, [selectedDept, selectedTeacher, searchQuery]);
+  }, [selectedDept, selectedTeacher, searchQuery, selectedCategory]);
 
   useEffect(() => { const timer = setTimeout(fetchAchievements, 300); return () => clearTimeout(timer); }, [fetchAchievements]);
 
@@ -106,6 +110,7 @@ export default function GalleryPage() {
   }, [searchQuery]);
 
   const allTeachers = [...new Set(achievements.map((a) => a.teacher_name))].sort();
+  const allCategories = [...new Set(achievements.flatMap((a) => (a.categories || '').split(',').filter(Boolean).map((c: string) => c.trim())))].sort();
   const imageFiles = lightbox ? lightbox.achievement.files.filter((f) => f.file_type === 'image') : [];
   const pdfFiles = lightbox ? lightbox.achievement.files.filter((f) => f.file_type === 'pdf') : [];
   const navigateLightbox = (dir: number) => { if (!lightbox) return; const i = lightbox.imageIndex + dir; if (i >= 0 && i < imageFiles.length) setLightbox({ ...lightbox, imageIndex: i }); };
@@ -247,7 +252,7 @@ export default function GalleryPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 mb-8">
         <div className="bg-dark-800 rounded-2xl border border-dark-600 p-6 shadow-xl">
           <div className="flex items-center gap-2 mb-4 text-gray-300"><Filter className="w-4 h-4" /><span className="text-sm font-medium">{t('filter.title')}</span></div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative" ref={searchRef}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input type="text" placeholder={t('filter.search')} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
@@ -272,17 +277,27 @@ export default function GalleryPage() {
               <option value="">{t('filter.allTeachers')}</option>
               {allTeachers.map((tn) => (<option key={tn} value={tn}>{tn}</option>))}
             </select>
+            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-white text-sm appearance-none cursor-pointer">
+              <option value="">{t('filter.allCategories')}</option>
+              {allCategories.map((c) => (<option key={c} value={c}>{c}</option>))}
+            </select>
           </div>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-6 flex items-center justify-between">
         <p className="text-gray-400 text-sm">{loading ? t('filter.loading') : t('filter.results', { count: achievements.length, s: achievements.length !== 1 ? 's' : '' })}</p>
+        <div className="flex gap-1 bg-dark-800 rounded-lg p-0.5 border border-dark-600">
+          <button onClick={() => setViewMode('grid')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'grid' ? 'bg-kahoot-purple text-white' : 'text-gray-400 hover:text-white'}`}><LayoutGrid className="w-3 h-3" />Grid</button>
+          <button onClick={() => setViewMode('calendar')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${viewMode === 'calendar' ? 'bg-kahoot-purple text-white' : 'text-gray-400 hover:text-white'}`}><CalendarDays className="w-3 h-3" />{t('calendar.title')}</button>
+        </div>
       </div>
 
-      {/* Grid */}
+      {/* Grid or Calendar */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-16">
-        {loading ? (
+        {viewMode === 'calendar' && !loading ? (
+          <CalendarView achievements={achievements} />
+        ) : loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">{Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}</div>
         ) : achievements.length === 0 ? (
           <div className="text-center py-20">
@@ -307,6 +322,7 @@ export default function GalleryPage() {
                         <div className={`w-full h-full bg-gradient-to-br ${getDeptColor(a.department)} flex items-center justify-center`}><Award className="w-12 h-12 text-white/30" /></div>
                       )}
                       <div className="absolute top-3 left-3"><span className="dept-badge px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg">{a.department}</span></div>
+                      {a.categories && a.categories.split(',').filter(Boolean).slice(0, 2).map((c: string, ci: number) => (<span key={ci} className="absolute top-3 ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/50 backdrop-blur-md text-white">{c.trim()}</span>))}
                       {hasFiles && <div className="absolute top-3 right-3"><div className="bg-black/50 backdrop-blur-md px-2 py-1 rounded-full text-xs text-white flex items-center gap-1"><ImageIcon className="w-3 h-3" />{a.files.length}</div></div>}
                       {a.is_pinned ? <div className="absolute bottom-3 right-3"><div className="bg-kahoot-yellow/90 px-2 py-0.5 rounded-full text-[10px] font-bold text-black">📌 Pinned</div></div> : null}
                     </div>
@@ -347,6 +363,7 @@ export default function GalleryPage() {
               <div className="flex items-center gap-3 text-sm text-gray-400">
                 <span className="flex items-center gap-1"><User className="w-3 h-3" />{lightbox.achievement.teacher_name}</span>
                 <span className="dept-badge px-2 py-0.5 rounded-full text-xs text-white">{lightbox.achievement.department}</span>
+                {(lightbox.achievement.categories || '').split(',').filter(Boolean).map((c: string, ci: number) => (<span key={ci} className="px-2 py-0.5 rounded-full text-xs bg-dark-700 text-gray-300 border border-dark-600">{c.trim()}</span>))}
               </div>
             </div>
             <button onClick={() => setLightbox(null)} className="w-10 h-10 rounded-full bg-dark-700 hover:bg-dark-600 flex items-center justify-center transition-colors"><X className="w-5 h-5 text-white" /></button>

@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { useSettings } from '@/components/SettingsContext';
 import DeleteModal from '@/components/DeleteModal';
-import { Plus, Award, FolderOpen, Users, Trash2, Edit3, FileText, Loader2 } from 'lucide-react';
+import { Plus, Award, FolderOpen, Users, Trash2, Edit3, FileText, Loader2, Download } from 'lucide-react';
+import { exportAchievementsPdf } from '@/lib/exportPdf';
 
 interface FileRecord { id: number; file_type: string; original_name: string; stored_name: string; mime_type: string; size: number; }
 interface Achievement { id: number; title: string; description: string; department: string; teacher_id: number | null; teacher_name: string; event_date: string | null; created_at: string; files: FileRecord[]; }
@@ -59,10 +60,19 @@ export default function TeacherDashboard() {
                 <span className="text-gray-400 text-sm">{isAdmin ? t('dash.adminBadge') : t('dash.teacherBadge')}</span>
               </div>
             </div>
-            <button onClick={() => router.push('/teacher/create')}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white font-bold text-sm hover:shadow-lg hover:shadow-kahoot-purple/30 transition-all">
-              <Plus className="w-5 h-5" />{t('dash.newAchievement')}
-            </button>
+            <div className="flex gap-2">
+              <button onClick={() => {
+                const schoolName = 'School Achievements';
+                exportAchievementsPdf(achievements, schoolName, 'Achievements Report');
+              }}
+                className="flex items-center gap-2 px-4 py-3 rounded-xl bg-dark-700 border border-dark-600 text-gray-300 hover:text-white hover:bg-dark-600 transition-all text-sm">
+                <Download className="w-4 h-4" />{t('export.pdf')}
+              </button>
+              <button onClick={() => router.push('/teacher/create')}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-kahoot-purple to-kahoot-blue text-white font-bold text-sm hover:shadow-lg hover:shadow-kahoot-purple/30 transition-all">
+                <Plus className="w-5 h-5" />{t('dash.newAchievement')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
