@@ -6,7 +6,7 @@ export interface SessionData {
   isLoggedIn?: boolean;
 }
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret-change-me';
+const SESSION_SECRET = process.env.SESSION_SECRET || 'fallback-secret-change-me-must-be-at-least-32-characters-long';
 const COOKIE_NAME = 'school-achievements-session';
 
 const loginSchema = z.object({
