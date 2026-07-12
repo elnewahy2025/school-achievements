@@ -35,7 +35,7 @@ export default function AchievementDetail() {
   const handleReact = async (emoji: string) => {
     setReacting(emoji);
     try {
-      const res = await fetch(`/api/achievements/${params.id}/react`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) });
+      const res = await fetch(`/api/achievements/${params.id}/react`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }), credentials: 'same-origin' });
       const data = await res.json();
       if (data.reactions) setReactions(data.reactions);
     } catch {} finally { setReacting(null); }

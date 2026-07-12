@@ -43,13 +43,13 @@ export default function CreateAchievement() {
     if (!form.department) { setError(t('form.dept')); return; }
     setError(''); setSaving(true);
     try {
-      const res = await fetch('/api/achievements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const res = await fetch('/api/achievements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form), credentials: 'same-origin' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       if (files.length > 0) {
         const formData = new FormData();
         files.forEach((file) => formData.append('files', file));
-        await fetch(`/api/achievements/${data.id}/upload`, { method: 'POST', body: formData });
+        await fetch(`/api/achievements/${data.id}/upload`, { method: 'POST', body: formData, credentials: 'same-origin' });
       }
       router.push('/teacher/dashboard');
     } catch (err: any) { setError(err.message || t('error.saveFailed')); } finally { setSaving(false); }

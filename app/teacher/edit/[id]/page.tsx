@@ -59,7 +59,7 @@ export default function EditAchievement() {
     if (!deleteFileModal.file) return;
     setDeletingFile(true);
     try {
-      const res = await fetch(`/api/achievements/${achievementId}/files/${deleteFileModal.file.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/achievements/${achievementId}/files/${deleteFileModal.file.id}`, { method: 'DELETE', credentials: 'same-origin' });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error); }
       setExistingFiles((prev) => prev.filter((f) => f.id !== deleteFileModal.file!.id));
       setDeleteFileModal({ open: false, file: null });
@@ -72,12 +72,12 @@ export default function EditAchievement() {
     if (!form.department) { setError(t('form.dept')); return; }
     setError(''); setSaving(true);
     try {
-      const res = await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: parseInt(achievementId), ...form }) });
+      const res = await fetch('/api/achievements', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: parseInt(achievementId), ...form }), credentials: 'same-origin' });
       if (!res.ok) { const data = await res.json(); throw new Error(data.error); }
       if (newFiles.length > 0) {
         const formData = new FormData();
         newFiles.forEach((file) => formData.append('files', file));
-        await fetch(`/api/achievements/${achievementId}/upload`, { method: 'POST', body: formData });
+        await fetch(`/api/achievements/${achievementId}/upload`, { method: 'POST', body: formData, credentials: 'same-origin' });
       }
       router.push('/teacher/dashboard');
     } catch (err: any) { setError(err.message || t('error.saveFailed')); } finally { setSaving(false); }

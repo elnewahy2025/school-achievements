@@ -27,7 +27,7 @@ export default function TeacherDashboard() {
     if (!deleteModal.achievement) return;
     setDeleting(true);
     try {
-      await fetch(`/api/achievements/${deleteModal.achievement.id}/delete`, { method: 'POST' });
+      await fetch(`/api/achievements/${deleteModal.achievement.id}/delete`, { method: 'POST', credentials: 'same-origin' });
       setAchievements(achievements.filter((a) => a.id !== deleteModal.achievement!.id));
       setDeleteModal({ open: false, achievement: null });
     } catch { alert(t('error.deleteFailed')); } finally { setDeleting(false); }

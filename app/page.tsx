@@ -119,7 +119,7 @@ export default function GalleryPage() {
   const handleReact = async (achievementId: number, emoji: string) => {
     setReacting(achievementId);
     try {
-      const res = await fetch(`/api/achievements/${achievementId}/react`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) });
+      const res = await fetch(`/api/achievements/${achievementId}/react`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }), credentials: 'same-origin' });
       const data = await res.json();
       if (data.reactions) {
         const update = (list: Achievement[]) => list.map((a) => a.id === achievementId ? { ...a, reactions: JSON.stringify(data.reactions) } : a);
