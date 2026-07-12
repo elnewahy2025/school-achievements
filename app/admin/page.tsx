@@ -9,7 +9,7 @@ import { Shield, Settings, FolderPlus, Users, Save, Plus, Trash2, Loader2, Alert
 
 export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
-  const { t } = useSettings();
+  const { t, language } = useSettings();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'settings' | 'departments' | 'teachers' | 'featured'>('settings');
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -91,13 +91,13 @@ export default function AdminPage() {
 
   if (authLoading || !user || user.is_admin !== 1) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 text-kahoot-red animate-spin" /></div>;
 
+
   const tabs = [
     { id: 'settings' as const, label: t('admin.tabSettings'), icon: Settings },
     { id: 'departments' as const, label: t('admin.tabDepts'), icon: FolderPlus },
     { id: 'teachers' as const, label: t('admin.tabTeachers'), icon: Users },
     { id: 'featured' as const, label: language === 'ar' ? 'المميزة' : 'Featured', icon: Star },
   ];
-  const { language } = useSettings();
 
   return (
     <div className="min-h-screen pb-16">

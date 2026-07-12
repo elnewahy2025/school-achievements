@@ -9,7 +9,7 @@ import { Plus, Award, FolderOpen, Users, Trash2, Edit3, FileText, Loader2, Downl
 import { exportAchievementsPdf } from '@/lib/exportPdf';
 
 interface FileRecord { id: number; file_type: string; original_name: string; stored_name: string; mime_type: string; size: number; }
-interface Achievement { id: number; title: string; description: string; department: string; teacher_id: number | null; teacher_name: string; event_date: string | null; created_at: string; files: FileRecord[]; }
+interface Achievement { id: number; title: string; description: string; department: string; teacher_id: number | null; teacher_name: string; event_date: string | null; categories: string; created_at: string; files: FileRecord[]; }
 
 export default function TeacherDashboard() {
   const { user, loading: authLoading } = useAuth();
